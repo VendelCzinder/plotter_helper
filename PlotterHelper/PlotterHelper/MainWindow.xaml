@@ -7,12 +7,12 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <Button Content="Select Image" HorizontalAlignment="Left" VerticalAlignment="Top" 
-                Margin="10,10,0,0" Click="SelectImage"/>
         <Button Content="Load Image" HorizontalAlignment="Left" VerticalAlignment="Top" 
-                Margin="10,35,0,0" Click="LoadImage"/>
-        <Button Content="Convert Image" HorizontalAlignment="Left" VerticalAlignment="Top" 
-                Margin="10,60,0,0" Click="SavePdf" />
-        <Image Name="preview"/>        
+                Margin="10,10,0,0" Click="LoadImage" Width="100"/>
+        <Button Content="Save to PDF" HorizontalAlignment="Left" VerticalAlignment="Top" 
+                Margin="10,35,0,0" Click="SavePdf" Width="100"/>
+        <Border Height="300" Width="300" Background="Gray" Margin="115,10,385,124">
+            <Image Name="preview" Stretch="Uniform"/>
+        </Border>
     </Grid>
 </Window>
