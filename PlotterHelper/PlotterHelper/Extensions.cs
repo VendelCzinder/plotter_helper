@@ -7,6 +7,24 @@ namespace PlotterHelper {
     public static class Extensions {
 
         /// <summary>
+        /// Returns the width of the image in inches
+        /// </summary>
+        /// <param name="bitmap">A bitmap image, both PixelWidth and DpiX must be set!</param>
+        /// <returns>The width of the image in inches</returns>
+        public static double WidthInches(this BitmapImage bitmap) { 
+            return bitmap.PixelWidth / bitmap.DpiX;
+        }
+
+        /// <summary>
+        /// Returns the height of the image in inches
+        /// </summary>
+        /// <param name="bitmap">A bitmap image, both PixelHeight and DpiY must be set!</param>
+        /// <returns>The height of the image in inches</returns>
+        public static double HeightInches(this BitmapImage bitmap) {
+            return bitmap.PixelHeight / bitmap.DpiY;
+        }
+
+        /// <summary>
         /// Takes a bitmap and converts it to an image that can be handled by WPF ImageBrush
         /// </summary>
         /// <param name="bitmap">A bitmap image</param>
