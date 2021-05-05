@@ -1,12 +1,30 @@
 ﻿using System;
-using System.Globalization;
-using System.Windows;
-using System.Windows.Media;
+using System.Drawing;
 using System.Windows.Media.Imaging;
 
 namespace PlotterHelper {
 
+    // TODO: settings
+
+
+
     static class Logic {
+
+        // constants
+        private const double LINE_LENGTH = 1; // inch
+        private const double LINE_WIDTH = 0.05; // inch
+        private const double TEXT_TOP_MARGIN = 0.5; // inch
+        private const double TEXT_RIGHT_MARGIN = 0.1; // inch
+        private const double TEXT_SIZE = 0.2; // inch
+
+        public static BitmapImage ProcessImage(BitmapImage input, int left, int top, int width, int height, int cutCount) {
+            // cutting the image
+            Bitmap bmp = CutBitmapImage(input, left, top, width, height);
+            // adding cutmarks
+            RenderOverlay(bmp, cutCount, input.DpiX, input.DpiY);
+            // converting and returning the image
+            return bmp.ToBitmapImage();
+        }
 
         /// <summary>
         /// Cuts the specified portion from the provided BitmapImage.
@@ -16,27 +34,40 @@ namespace PlotterHelper {
         /// <param name="width">The width of the cut [px]</param>
         /// <param name="height">The height of the cut [px]</param>
         /// <returns>The cut portion</returns>
-        public static BitmapSource CutBitmapImage(BitmapImage input, int left, int top, int width, int height) {
-            return new CroppedBitmap(input, new System.Windows.Int32Rect(left, top, width, height));
+        private static Bitmap CutBitmapImage(BitmapImage input, int left, int top, int width, int height) {
+            // converting to bitmap
+            Bitmap bmp = input.ToBitmap();
+            // cropping, returning
+            return bmp.Clone(new Rectangle(left, top, width, height), bmp.PixelFormat);
         }
 
-        public static BitmapImage RenderCutMarks(BitmapImage image) {
-
-            RenderTargetBitmap target = new RenderTargetBitmap(image.PixelWidth, image.PixelHeight, 
-                image.DpiX, image.DpiY, image.Format);
-            DrawingVisual visual = new DrawingVisual();
-
-            using (var r = visual.RenderOpen()) {
-                r.DrawImage(image, new Rect(0, 0, image.PixelWidth, image.PixelHeight));
-                r.DrawLine(new Pen(Brushes.Red, 10.0), new Point(0, 0), new Point(image.PixelWidth, image.PixelHeight));
-                r.DrawText(new FormattedText(
-                    "Hello", CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                    new Typeface("Segoe UI"), 24.0, Brushes.Black), new Point(100, 10));
-            }
-
-            target.Render(visual);
-
-            visual.
+        private static void RenderOverlay(Bitmap input, int count, double dpiX, double dpiY) {
+            // calculating sizes
+            double lineLength = LINE_LENGTH * dpiX;
+            double lineWidth = LINE_WIDTH * dpiY;
+            double textSize = TEXT_SIZE * dpiX;
+            double textRightMargin = TEXT_RIGHT_MARGIN * dpiX;
+            double step = input.Height / (double)count;
+            // creating a Graphics object
+            using Graphics graphics = Graphics.FromImage(input);
+            // loop for the drawing
+            for (int i = 1; i < count; i++) {
+                // calculating the top position for the line
+                int lineTop = (int)((step * i) - (lineWidth / 2));
+                // drawing the line
+                graphics.DrawLine(new Pen(Brushes.Red, (float)lineWidth), 
+                    input.Width - (int)lineLength, lineTop, input.Width, lineTop);
+                // calculating the top position for the text
+                int textTop = (int)(lineTop + lineWidth + TEXT_TOP_MARGIN);
+                // calculating text width
+                var textWidth = graphics.MeasureString((count - i + 1).ToString(), 
+                    new Font(FontFamily.GenericSansSerif, (float)textSize)).Width;
+                // drawing the text
+                graphics.DrawString((count - i).ToString(), new Font(FontFamily.GenericSansSerif, (float)textSize),
+                    Brushes.Red, new PointF((float)(input.Width - textWidth - textRightMargin), textTop));
+            }           
+            // saving the drawing
+            graphics.Flush();
         }
     }
 }

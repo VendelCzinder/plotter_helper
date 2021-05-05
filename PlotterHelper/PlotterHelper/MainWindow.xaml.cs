@@ -36,8 +36,16 @@ namespace PlotterHelper {
         }
 
         private void SavePdfButtonClick(object sender, RoutedEventArgs e) {
+            // cutting, drawing marks, writing text
+            BitmapImage cutImage = Logic.ProcessImage(
+                bitmap, 
+                (int)(cutSliderX.Value / preview.ActualWidth * bitmap.Width), 
+                (int)(cutSliderY.Value / preview.ActualHeight * bitmap.Height), 
+                (int)(double.Parse(cutWidth.Text) * bitmap.DpiX), 
+                (int)(double.Parse(cutHeight.Text) * bitmap.DpiY),
+                int.Parse(sliceCount.Text));
             // saving the PDF file
-            SavePdf();
+            SavePdf(cutImage);
         }
 
         private void CutSliderXValueChange(object sender, RoutedPropertyChangedEventArgs<double> e) {
@@ -145,7 +153,7 @@ namespace PlotterHelper {
         /// <summary>
         /// Saves the selected region to a PDF file.
         /// </summary>
-        private void SavePdf() {
+        private void SavePdf(BitmapImage bitmapImage) {
             // creating a save file dialog, setting filter, opening
             SaveFileDialog dialog = new SaveFileDialog();
             dialog.Filter = "PDF files (*.pdf) | *.pdf";
@@ -155,7 +163,7 @@ namespace PlotterHelper {
             // getting the filename
             string path = dialog.FileName;
             // saving the file
-            ImageHandler.SaveToPdf(bitmap, path);
+            ImageHandler.SaveToPdf(bitmapImage, path);
         }
     }
 }
