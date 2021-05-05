@@ -30,7 +30,7 @@ namespace PlotterHelper {
             return null;
         }
 
-        public static void SaveToPdf(BitmapImage bitmap, string path) {
+        public static void SaveToPdf(BitmapSource bitmap, string path) {
             // creating a pdf file
             PdfDocument pdf = new PdfDocument();
             // creating a page

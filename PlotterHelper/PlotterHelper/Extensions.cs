@@ -40,6 +40,20 @@ namespace PlotterHelper {
             return image;
         }
 
+        /// <summary>
+        /// Takes a BitmapImage and converts it to a Bitmap
+        /// </summary>
+        /// <param name="bitmapImage">A BitmapImage</param>
+        /// <returns>The same image as a Bitmap</returns>
+        public static Bitmap ToBitmap(this BitmapImage bitmapImage) {
+            using MemoryStream outStream = new MemoryStream();
+            BitmapEncoder enc = new BmpBitmapEncoder();
+            enc.Frames.Add(BitmapFrame.Create(bitmapImage));
+            enc.Save(outStream);
+            Bitmap bitmap = new Bitmap(outStream);
+            return new Bitmap(bitmap);
+        }
+
         // spare method
         /// <summary>
         /// Converts a Bitmap to a BitmapImage
