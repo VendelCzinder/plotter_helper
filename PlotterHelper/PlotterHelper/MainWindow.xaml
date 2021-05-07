@@ -47,7 +47,7 @@
         <TextBox HorizontalAlignment="Left" Margin="160,279,0,0"  TextWrapping="Wrap" 
             VerticalAlignment="Top" Width="50" x:Name="sliceCount" Text="2"/>
 
-        <Button Content="Save to PDF" HorizontalAlignment="Left" VerticalAlignment="Top" 
+        <Button Content="Process and save to PDF" HorizontalAlignment="Left" VerticalAlignment="Top" 
                 Margin="10,306,0,0" Click="SavePdfButtonClick" Width="200"/>
 
         <Grid Margin="215,10,10,10">

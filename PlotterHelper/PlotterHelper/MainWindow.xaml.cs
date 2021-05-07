@@ -14,6 +14,7 @@ namespace PlotterHelper {
         // TODO: show notification when export is done
         // TODO: sanitize all inputs
         // CONSIDER: show preview
+        // TODO: cleanup data after saving
 
         // constants
         private const double MIN_CUT_WIDTH = 1; // inches
@@ -103,7 +104,7 @@ namespace PlotterHelper {
             // getting the filename
             string path = dialog.FileName;
             // loading the file
-            bitmap = ImageHandler.LoadImage(path);
+            bitmap = IoHandler.LoadImage(path);
             preview.Source = bitmap;
             preview.UpdateLayout();
         }
@@ -163,7 +164,7 @@ namespace PlotterHelper {
             // getting the filename
             string path = dialog.FileName;
             // saving the file
-            ImageHandler.SaveToPdf(bitmapImage, path);
+            IoHandler.SaveToPdf(bitmapImage, path);
         }
     }
 }

@@ -8,7 +8,7 @@ using System.Windows.Media.Imaging;
 
 namespace PlotterHelper {
 
-    class ImageHandler {
+    class IoHandler {
 
         private static readonly string[] rasterTypes = { ".jpg", ".jpeg", ".png" };
         private static readonly string[] vectorTypes = { ".svg" };
