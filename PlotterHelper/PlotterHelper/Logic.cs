@@ -16,8 +16,10 @@ namespace PlotterHelper {
             Bitmap bmp = CutLogic.CutToSize(input.ToBitmap(), left, top, width, height);
             // adding cutmarks
             OverlayLogic.RenderOverlay(bmp, cutCount, input.DpiX, input.DpiY);
+            // optimizing layout
+            BitmapImage output = CutLogic.PlaceImage(bmp, cutCount, input.DpiX, input.DpiY);
             // converting and returning the image
-            return bmp.ToBitmapImage();
+            return output;
         }
     }
 }

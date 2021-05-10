@@ -21,7 +21,7 @@ namespace PlotterHelper {
         private const double MIN_CUT_HEIGHT = 1; // inches
 
 
-        private BitmapImage bitmap = null;
+        private BitmapImage bitmapImage = null;
 
         public MainWindow() {
             InitializeComponent();
@@ -38,15 +38,15 @@ namespace PlotterHelper {
 
         private void SavePdfButtonClick(object sender, RoutedEventArgs e) {
             // cutting, drawing marks, writing text
-            BitmapImage cutImage = Logic.ProcessImage(
-                bitmap, 
-                (int)(cutSliderX.Value / preview.ActualWidth * bitmap.Width), 
-                (int)(cutSliderY.Value / preview.ActualHeight * bitmap.Height), 
-                (int)(double.Parse(cutWidth.Text) * bitmap.DpiX), 
-                (int)(double.Parse(cutHeight.Text) * bitmap.DpiY),
+            BitmapImage procesedImage = Logic.ProcessImage(
+                bitmapImage, 
+                (int)(cutSliderX.Value / preview.ActualWidth * bitmapImage.Width), 
+                (int)(cutSliderY.Value / preview.ActualHeight * bitmapImage.Height), 
+                (int)(double.Parse(cutWidth.Text) * bitmapImage.DpiX), 
+                (int)(double.Parse(cutHeight.Text) * bitmapImage.DpiY),
                 int.Parse(sliceCount.Text));
             // saving the PDF file
-            SavePdf(cutImage);
+            SavePdf(procesedImage);
         }
 
         private void CutSliderXValueChange(object sender, RoutedPropertyChangedEventArgs<double> e) {
@@ -80,11 +80,11 @@ namespace PlotterHelper {
             // range constraints
             if (width < MIN_CUT_WIDTH) { width = MIN_CUT_WIDTH; }
             if (height < MIN_CUT_HEIGHT) { width = MIN_CUT_HEIGHT; }
-            if (width > bitmap.WidthInches()) { width = bitmap.WidthInches(); }
-            if (height > bitmap.HeightInches()) { height = bitmap.HeightInches(); }
+            if (width > bitmapImage.WidthInches()) { width = bitmapImage.WidthInches(); }
+            if (height > bitmapImage.HeightInches()) { height = bitmapImage.HeightInches(); }
             // calculating the cut size in pixels
-            cutBorder.Width = width / bitmap.WidthInches() * preview.ActualWidth;
-            cutBorder.Height = height / bitmap.HeightInches() * preview.ActualHeight;
+            cutBorder.Width = width / bitmapImage.WidthInches() * preview.ActualWidth;
+            cutBorder.Height = height / bitmapImage.HeightInches() * preview.ActualHeight;
             cutBorder.UpdateLayout();
             // setting slider maximums
             SetSliderMaximums();
@@ -104,8 +104,8 @@ namespace PlotterHelper {
             // getting the filename
             string path = dialog.FileName;
             // loading the file
-            bitmap = IoHandler.LoadImage(path);
-            preview.Source = bitmap;
+            bitmapImage = IoHandler.LoadImage(path);
+            preview.Source = bitmapImage;
             preview.UpdateLayout();
         }
 
@@ -114,10 +114,10 @@ namespace PlotterHelper {
         /// </summary>
         private void SetUiToDefaults() {
             // null check
-            if (bitmap == null) { return; }
+            if (bitmapImage == null) { return; }
             // setting cut size (by the image dimensions)
-            cutWidth.Text = bitmap.WidthInches().ToString("0.##");
-            cutHeight.Text = bitmap.HeightInches().ToString("0.##");
+            cutWidth.Text = bitmapImage.WidthInches().ToString("0.##");
+            cutHeight.Text = bitmapImage.HeightInches().ToString("0.##");
             // setting the margin of the cut to the top-left of the image
             cutBorder.Margin = new Thickness(0, 0, 0, 0);
             // setting the size of the cut to the size of the image

@@ -52,7 +52,9 @@ namespace PlotterHelper {
             enc.Frames.Add(BitmapFrame.Create(bitmapImage));
             enc.Save(outStream);
             Bitmap bitmap = new Bitmap(outStream);
-            return new Bitmap(bitmap);
+            Bitmap bitmap2 = new Bitmap(bitmap);
+            bitmap2.SetResolution((float)bitmapImage.DpiX, (float)bitmapImage.DpiY);
+            return bitmap2;
         }
 
         // spare method

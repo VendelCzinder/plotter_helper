@@ -111,7 +111,7 @@ namespace PlotterHelper {
             // getting HLS
             (double h, double l, double s) = RgbToHls(color.R, color.G, color.B);
             // changing the luminance
-            if (l > 0.5) {
+            if (l > 0.4) {
                 l = 0;
             }
             else {
