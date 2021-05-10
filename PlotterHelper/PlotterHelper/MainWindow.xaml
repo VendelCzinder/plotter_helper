@@ -2,61 +2,91 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:PlotterHelper"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:fa="http://schemas.fontawesome.io/icons/"
         mc:Ignorable="d"
-        Title="Image Slicer" Height="450" Width="800">
+        SizeToContent="Height"
+        SizeChanged="WindowSizeChanged"
+        Loaded="WindowLoaded"
+        Width="800"
+        MinWidth="400"
+        Title="Image Slicer">
     <Grid>
-        <Button Content="Load Image" HorizontalAlignment="Left" VerticalAlignment="Top" 
-                Margin="10,10,0,0" Click="LoadImageButtonClick" Width="200"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
 
-        <Label Content="Required width [inches]" HorizontalAlignment="Left" 
-               Margin="10,35,0,0" VerticalAlignment="Top" Width="140"/>
-        <TextBox HorizontalAlignment="Left" Margin="160,39,0,0"  TextWrapping="Wrap" 
-                 VerticalAlignment="Top" Width="50" Name="cutWidth" Text="0"/>
+        <Grid x:Name="spinner" Grid.ColumnSpan="2" Background="#CCFFFFFF" Panel.ZIndex="10" Visibility="Hidden">
+            <!-- Spinner -->
+            <fa:ImageAwesome Icon="Spinner" Spin="True" Height="48" Width="48" />
+        </Grid>
 
-        <Label Content="Required height [inches]" HorizontalAlignment="Left" 
-            Margin="10,66,0,0" VerticalAlignment="Top" Width="140"/>
-        <TextBox HorizontalAlignment="Left" Margin="160,70,0,0" TextWrapping="Wrap" 
-                 VerticalAlignment="Top" Width="50" Name="cutHeight" Text="0"/>
+        <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="10" Grid.Column="0">
+            <GroupBox Header="Input">
+                <Button Content="Load Image" Click="LoadImageButtonClick"/>
+            </GroupBox>
+            <GroupBox Header="Cut size">
+                <StackPanel>
+                    <Grid Margin="0, 5, 0, 5">
+                        <Label Content="Required width [inches]" HorizontalAlignment="Left"/>
+                        <TextBox HorizontalAlignment="Right" Width="50" Name="cutWidthInput" Text="0"
+                            HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+                    </Grid>
+                    <Grid Margin="0, 5, 0, 5">
+                        <Label Content="Required height [inches]" HorizontalAlignment="Left"/>
+                        <TextBox HorizontalAlignment="Right" Width="50" Name="cutHeightInput" Text="0"
+                            HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+                    </Grid>
+                    
+                    <Label Content="OR" HorizontalAlignment="Center" FontWeight="Bold"/>
 
-        <Button Content="Update cut" HorizontalAlignment="Left" VerticalAlignment="Top" 
-            Margin="10,97,0,0" Click="ResizeCutButtonClick" Width="200"/>
+                    <Grid Margin="0, 5, 0, 5">
+                        <Label Content="Step height [inches]" HorizontalAlignment="Left"/>
+                        <TextBox HorizontalAlignment="Right" Width="50" Name="stepHeightInput" Text="0"
+                            HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+                    </Grid>
 
-        <Slider HorizontalAlignment="Left" Margin="10,131,0,0" VerticalAlignment="Top" Height="139"
-                Orientation="Vertical" Minimum="0" Maximum="0" Name="cutSliderY"
-                ValueChanged="CutSliderYValueChange" RenderTransformOrigin="0.5,0.5">
-            <Slider.RenderTransform>
-                <TransformGroup>
-                    <ScaleTransform ScaleY="-1"/>
-                    <SkewTransform/>
-                    <RotateTransform/>
-                    <TranslateTransform/>
-                </TransformGroup>
-            </Slider.RenderTransform>
-        </Slider>
-        <Slider HorizontalAlignment="Left" Margin="33,122,0,0" VerticalAlignment="Top" Width="177" 
-                Orientation="Horizontal" Minimum="0" Maximum="0" Name="cutSliderX"
-                ValueChanged="CutSliderXValueChange"/>
+                    <Grid Margin="0, 5, 0, 5">
+                        <Label Content="Number of steps" HorizontalAlignment="Left"/>
+                        <TextBox HorizontalAlignment="Right" Width="50" x:Name="stepCountInput" Text="2"
+                            HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+                    </Grid>
+                    
+                    <Button x:Name="updateCutButton" Content="Update cut size" 
+                            Click="ResizeCutButtonClick" IsEnabled="False"/>
+                    
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="Cut position" Padding="5,5,5,5">
+                <Grid>
+                    <Slider VerticalAlignment="Top" HorizontalAlignment="Stretch"
+                        Orientation="Horizontal" Minimum="0" Maximum="0" Name="cutSliderX"
+                     ValueChanged="CutSliderXValueChange"/>
 
-        <Label Content="Cut position" HorizontalAlignment="Left" 
-            Margin="33,145,0,0" VerticalAlignment="Top" Width="140"/>
-
-        <Label Content="Number of slices" HorizontalAlignment="Left" 
-            Margin="10,275,0,0" VerticalAlignment="Top" Width="140"/>
-        <TextBox HorizontalAlignment="Left" Margin="160,279,0,0"  TextWrapping="Wrap" 
-            VerticalAlignment="Top" Width="50" x:Name="sliceCount" Text="2"/>
-
-        <Button Content="Process and save to PDF" HorizontalAlignment="Left" VerticalAlignment="Top" 
-                Margin="10,306,0,0" Click="SavePdfButtonClick" Width="200"/>
-
-        <Grid Margin="215,10,10,10">
+                    <Slider HorizontalAlignment="Left" VerticalAlignment="Top" Height="150"
+                        Orientation="Vertical" Minimum="0" Maximum="0" Name="cutSliderY" Margin="0,20,0,0"
+                        ValueChanged="CutSliderYValueChange" RenderTransformOrigin="0.5,0.5">
+                        <Slider.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleY="-1"/>
+                                <SkewTransform/>
+                                <RotateTransform/>
+                                <TranslateTransform/>
+                            </TransformGroup>
+                        </Slider.RenderTransform>
+                    </Slider>
+                </Grid>
+            </GroupBox>
+            <GroupBox Header="Output">
+                <Button x:Name="saveImageButton" Content="Process and save to PDF" 
+                        Click="SavePdfButtonClick" IsEnabled="False"/>
+            </GroupBox>
+        </StackPanel>
+        <Grid Grid.Column="1" Margin="10, 10, 10, 10">
             <Border BorderBrush="Red" BorderThickness="1" Name="cutBorder" Panel.ZIndex="2"
                     HorizontalAlignment="Left"  VerticalAlignment="Top" />
             <Image Name="preview" Stretch="Uniform" HorizontalAlignment="Left"
                    VerticalAlignment="Top"/>
         </Grid>
-
-
     </Grid>
 </Window>

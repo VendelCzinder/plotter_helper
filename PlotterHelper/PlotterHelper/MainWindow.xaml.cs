@@ -9,17 +9,12 @@ namespace PlotterHelper {
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window {
-
-        // TODO: check that the image has SIZE and DPI
+        
         // TODO: show notification when export is done
-        // TODO: sanitize all inputs
-        // CONSIDER: show preview
-        // TODO: cleanup data after saving
 
         // constants
         private const double MIN_CUT_WIDTH = 1; // inches
         private const double MIN_CUT_HEIGHT = 1; // inches
-
 
         private BitmapImage bitmapImage = null;
 
@@ -29,6 +24,14 @@ namespace PlotterHelper {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
+        private void WindowSizeChanged(object sender, SizeChangedEventArgs e) {
+            SetUiToDefaults();
+        }
+
+        private void WindowLoaded(object sender, RoutedEventArgs e) {
+            MinHeight = Height;
+        }
+
         private void LoadImageButtonClick(object sender, RoutedEventArgs e) {
             // loading image
             LoadImage();
@@ -36,17 +39,101 @@ namespace PlotterHelper {
             SetUiToDefaults();
         }
 
+        private void ResizeCutButtonClick(object sender, RoutedEventArgs e) {
+            // image check
+            if (bitmapImage == null) {
+                // error
+                MessageBox.Show("Please load an image first!", "Error - missing image",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            // variables
+            double width, height, stepHeight; // [inches]
+            int count;
+            // trying to get the width
+            if (!double.TryParse(cutWidthInput.Text, out width)) {
+                // error
+                MessageBox.Show("The cut width must be specified!", "Error - missing data",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            // range check
+            if (width <= 0 || width > bitmapImage.WidthInches() + 0.01) {
+                // error
+                MessageBox.Show("The cut width must be between zero and the width of the image!",
+                    "Error - wrong input",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            // trying to get number of steps
+            if (!int.TryParse(stepCountInput.Text, out count)) {
+                // error
+                MessageBox.Show("The number of steps must be specified!", "Error - missing data",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            // range check
+            if (count <= 0) {
+                // error
+                MessageBox.Show("The step count must be larger than zero!",
+                    "Error - wrong input",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            // trying to get the step height
+            if (double.TryParse(stepHeightInput.Text, out stepHeight) && stepHeight != 0) {
+                height = stepHeight * count;
+                // range check
+                if (height > bitmapImage.HeightInches() + 0.01) {
+                    // error
+                    MessageBox.Show("The step height times the cut count must not exceed the the image height!",
+                        "Error - wrong input",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                // updating the cut height textbox
+                cutHeightInput.Text = height.ToString("0.##");
+            }
+            else {
+                // trying to get the height
+                if (!double.TryParse(cutHeightInput.Text, out height)) {
+                    // error
+                    MessageBox.Show("The cut height OR the step heigh must be specified!",
+                        "Error - missing data",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                // range check
+                if (width <= 0 || width > bitmapImage.WidthInches() + 0.01) {
+                    // error
+                    MessageBox.Show("The cut height must be between zero and the height of the image!",
+                        "Error - wrong input",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                stepHeight = height / count;
+                // updating the step height textbox
+                stepHeightInput.Text = stepHeight.ToString("0.##");
+            }
+            // resizing the cut
+            ResizeCut(width, height);
+        }
+
         private void SavePdfButtonClick(object sender, RoutedEventArgs e) {
+            // showing spinner
+            spinner.Visibility = Visibility.Visible;
+            spinner.UpdateLayout();
             // cutting, drawing marks, writing text
             BitmapImage procesedImage = Logic.ProcessImage(
                 bitmapImage, 
                 (int)(cutSliderX.Value / preview.ActualWidth * bitmapImage.PixelWidth), 
                 (int)(cutSliderY.Value / preview.ActualHeight * bitmapImage.PixelHeight), 
-                (int)(double.Parse(cutWidth.Text) * bitmapImage.DpiX), 
-                (int)(double.Parse(cutHeight.Text) * bitmapImage.DpiY),
-                int.Parse(sliceCount.Text));
+                (int)(double.Parse(cutWidthInput.Text) * bitmapImage.DpiX), 
+                (int)(double.Parse(cutHeightInput.Text) * bitmapImage.DpiY),
+                int.Parse(stepCountInput.Text));
             // saving the PDF file
             SavePdf(procesedImage);
+
         }
 
         private void CutSliderXValueChange(object sender, RoutedPropertyChangedEventArgs<double> e) {
@@ -61,14 +148,6 @@ namespace PlotterHelper {
             if (cutSliderX == null || cutSliderY == null) { return; }
             // setting new margin (by the slider values)
             cutBorder.Margin = new Thickness(cutSliderX.Value, cutSliderY.Value, 0, 0);
-        }
-
-        private void ResizeCutButtonClick(object sender, RoutedEventArgs e) {
-            // getting width and height
-            double width = double.Parse(cutWidth.Text);
-            double height = double.Parse(cutHeight.Text);
-            // resizing the cut
-            ResizeCut(width, height);
         }
 
         /// <summary>
@@ -89,6 +168,8 @@ namespace PlotterHelper {
             // setting slider maximums
             SetSliderMaximums();
             SetSliderPositions();
+            // enabling button
+            saveImageButton.IsEnabled = true;
         }
 
         /// <summary>
@@ -103,10 +184,36 @@ namespace PlotterHelper {
             if (result != true) { return; }
             // getting the filename
             string path = dialog.FileName;
+            // showing spinner
+            spinner.Visibility = Visibility.Visible;
+            spinner.UpdateLayout();
             // loading the file
             bitmapImage = IoHandler.LoadImage(path);
+            // hiding spinner
+            spinner.Visibility = Visibility.Hidden;
+            // size check
+            if (bitmapImage.PixelWidth == 0 || bitmapImage.PixelHeight == 0) {
+                // error
+                MessageBox.Show("The image is missing width or height data! Please set it before loading it!",
+                    "Error - missing image metadata",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                bitmapImage = null;
+                return;
+            }
+            // DPI check
+            if (bitmapImage.DpiX == 0 || bitmapImage.DpiY == 0) {
+                // error
+                MessageBox.Show("The image is missing vertical or horizontal DPI data! " +
+                    "Please set it before loading it!",
+                    "Error - missing image metadata",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                bitmapImage = null;
+                return;
+            }
             preview.Source = bitmapImage;
             preview.UpdateLayout();
+            // enabling button
+            updateCutButton.IsEnabled = true;
         }
 
         /// <summary>
@@ -116,8 +223,8 @@ namespace PlotterHelper {
             // null check
             if (bitmapImage == null) { return; }
             // setting cut size (by the image dimensions)
-            cutWidth.Text = bitmapImage.WidthInches().ToString("0.##");
-            cutHeight.Text = bitmapImage.HeightInches().ToString("0.##");
+            cutWidthInput.Text = bitmapImage.WidthInches().ToString("0.##");
+            cutHeightInput.Text = bitmapImage.HeightInches().ToString("0.##");
             // setting the margin of the cut to the top-left of the image
             cutBorder.Margin = new Thickness(0, 0, 0, 0);
             // setting the size of the cut to the size of the image
@@ -162,9 +269,10 @@ namespace PlotterHelper {
             // no file is selected, returning
             if (result != true) { return; }
             // getting the filename
-            string path = dialog.FileName;
+            string path = dialog.FileName;           
             // saving the file
-            IoHandler.SaveToPdf(bitmapImage, path);
+            IoHandler.SaveToPdf(bitmapImage, path);            
         }
+
     }
 }

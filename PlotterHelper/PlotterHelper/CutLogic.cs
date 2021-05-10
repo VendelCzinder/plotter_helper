@@ -16,7 +16,7 @@ namespace PlotterHelper {
         }
 
         // constants
-        private const double PRINTER_WIDTH = 12; // [inches]
+        private const double PRINTER_WIDTH = 52; // [inches]
 
         /// <summary>
         /// Cuts the specified portion from the provided Bitmap.
@@ -213,13 +213,15 @@ namespace PlotterHelper {
             // width check
             if (widthInches > PRINTER_WIDTH) { return (0, 0, double.MaxValue); }
             // calculating the number of columns
-            int columnCount = (int)(PRINTER_WIDTH / widthInches);
+            int maxColumnCount = (int)(PRINTER_WIDTH / widthInches);
             // calculating the step height [inches]
             double stepHeight = heightInches / count;
             // calculating the row count
-            int rowCount = (int)Math.Ceiling(count / (double)columnCount);
+            int rowCount = (int)Math.Ceiling(count / (double)maxColumnCount);
+            // calculating the real column count
+            int realColumnCount = (int)Math.Ceiling(count / (double)rowCount);
             // calculating and returning the maximum column height: maximum column count * element height [inches]
-            return (rowCount, columnCount, rowCount * stepHeight);
+            return (rowCount, realColumnCount, rowCount * stepHeight);
         }
 
         /// <summary>
