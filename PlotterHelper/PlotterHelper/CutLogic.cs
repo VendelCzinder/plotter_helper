@@ -28,8 +28,19 @@ namespace PlotterHelper {
         /// <param name="height">The height of the cut [px]</param>
         /// <returns>The cut portion</returns>
         public static Bitmap CutToSize(Bitmap input, int left, int top, int width, int height) {
-            // cropping, returning
-            return input.Clone(new Rectangle(left, top, width, height), input.PixelFormat);
+            // creating output
+            Bitmap output = new Bitmap(width, height);
+            // creating graphics, copying the image part
+            using Graphics graphics = Graphics.FromImage(output);
+            graphics.DrawImage(
+                input,
+                new Rectangle(0, 0, width, height),
+                new Rectangle(left, top, width, height),
+                GraphicsUnit.Pixel);
+            // writing changes
+            graphics.Flush();
+            // returning
+            return output;
         }
 
         // TODO: handle if print is too big, cannot print
@@ -85,7 +96,7 @@ namespace PlotterHelper {
                 // destination rectangle
                 Rectangle destRect = new Rectangle(leftPosition, 0, sourceRect.Width, sourceRect.Height);
                 // doing the copy
-                graphics.DrawImage(image, leftPosition, 0, sourceRect, GraphicsUnit.Pixel);
+                graphics.DrawImage(image, destRect, sourceRect, GraphicsUnit.Pixel);
             }
             // writing the new image
             graphics.Flush();

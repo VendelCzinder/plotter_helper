@@ -40,8 +40,8 @@ namespace PlotterHelper {
             // cutting, drawing marks, writing text
             BitmapImage procesedImage = Logic.ProcessImage(
                 bitmapImage, 
-                (int)(cutSliderX.Value / preview.ActualWidth * bitmapImage.Width), 
-                (int)(cutSliderY.Value / preview.ActualHeight * bitmapImage.Height), 
+                (int)(cutSliderX.Value / preview.ActualWidth * bitmapImage.PixelWidth), 
+                (int)(cutSliderY.Value / preview.ActualHeight * bitmapImage.PixelHeight), 
                 (int)(double.Parse(cutWidth.Text) * bitmapImage.DpiX), 
                 (int)(double.Parse(cutHeight.Text) * bitmapImage.DpiY),
                 int.Parse(sliceCount.Text));
