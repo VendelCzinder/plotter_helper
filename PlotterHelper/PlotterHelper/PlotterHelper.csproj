@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="FontAwesome.WPF" Version="4.7.0.9" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="PDFsharp-wpf" Version="1.50.5147" />
     <PackageReference Include="Svg" Version="3.2.3" />
   </ItemGroup>

@@ -22,6 +22,9 @@
         </Grid>
 
         <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="10" Grid.Column="0">
+            <GroupBox Header="Settings">
+                <Button Content="Open settings" Click="OpenSettingsClick"/>
+            </GroupBox>
             <GroupBox Header="Input">
                 <Button Content="Load Image" Click="LoadImageButtonClick"/>
             </GroupBox>

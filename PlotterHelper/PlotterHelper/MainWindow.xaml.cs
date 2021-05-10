@@ -10,18 +10,19 @@ namespace PlotterHelper {
     /// </summary>
     public partial class MainWindow : Window {
         
-        // TODO: show notification when export is done
-
         // constants
         private const double MIN_CUT_WIDTH = 1; // inches
         private const double MIN_CUT_HEIGHT = 1; // inches
 
+        private Settings settings = null;
         private BitmapImage bitmapImage = null;
 
         public MainWindow() {
             InitializeComponent();
             // for the PDF generator
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // loading settings
+            settings = IoHandler.LoadSettings();
         }
 
         private void WindowSizeChanged(object sender, SizeChangedEventArgs e) {
@@ -130,10 +131,32 @@ namespace PlotterHelper {
                 (int)(cutSliderY.Value / preview.ActualHeight * bitmapImage.PixelHeight), 
                 (int)(double.Parse(cutWidthInput.Text) * bitmapImage.DpiX), 
                 (int)(double.Parse(cutHeightInput.Text) * bitmapImage.DpiY),
-                int.Parse(stepCountInput.Text));
+                int.Parse(stepCountInput.Text), 
+                settings);
+            // null check
+            if (procesedImage == null) {
+                // error
+                MessageBox.Show("The image cannot be printed as the steps are bigger than the printer! " +
+                    "Consider lowering the image width or the step height, or changing the settings!",
+                    "Error - image too big",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                // hiding spinner
+                spinner.Visibility = Visibility.Hidden;
+                // returning
+                return;
+            }
             // saving the PDF file
             SavePdf(procesedImage);
+            // hiding spinner
+            spinner.Visibility = Visibility.Hidden;
+        }
 
+        private void OpenSettingsClick(object sender, RoutedEventArgs e) {
+            // opening a settings Window
+            SettingsWindow settingsWindow = new SettingsWindow(settings);
+            settingsWindow.ShowDialog();
+            // getting the settings file
+            settings = settingsWindow.Settings;
         }
 
         private void CutSliderXValueChange(object sender, RoutedPropertyChangedEventArgs<double> e) {

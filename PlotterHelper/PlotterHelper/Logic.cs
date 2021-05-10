@@ -4,10 +4,6 @@ using System.Windows.Media.Imaging;
 
 namespace PlotterHelper {
 
-    // TODO: settings
-
-
-
     static class Logic {
 
         /// <summary>
@@ -21,13 +17,13 @@ namespace PlotterHelper {
         /// <param name="cutCount"></param>
         /// <returns></returns>
         public static BitmapImage ProcessImage(BitmapImage input, int left, int top, int width, int height, 
-            int cutCount) {
+            int cutCount, Settings settings) {
             // cutting the image
-            Bitmap bmp = CutLogic.CutToSize(input.ToBitmap(), left, top, width, height);
+            Bitmap bmp = CutLogic.CutToSize(input.ToBitmap(), left, top, width, height, settings);
             // adding cutmarks
-            OverlayLogic.RenderOverlay(bmp, cutCount, input.DpiX, input.DpiY);
+            OverlayLogic.RenderOverlay(bmp, cutCount, input.DpiX, input.DpiY, settings);
             // optimizing layout
-            BitmapImage output = CutLogic.PlaceImage(bmp, cutCount, input.DpiX, input.DpiY);
+            BitmapImage output = CutLogic.PlaceImage(bmp, cutCount, input.DpiX, input.DpiY, settings);
             // converting and returning the image
             return output;
         }

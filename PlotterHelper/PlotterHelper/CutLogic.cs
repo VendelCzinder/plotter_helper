@@ -9,15 +9,6 @@ using System.Windows.Media.Imaging;
 namespace PlotterHelper {
     public static class CutLogic {
 
-        public enum CutPolicy {
-            Lengthwise,
-            Crosswise,
-            Mixed
-        }
-
-        // constants
-        private const double PRINTER_WIDTH = 52; // [inches]
-
         /// <summary>
         /// Cuts the specified portion from the provided Bitmap.
         /// </summary>
@@ -27,7 +18,7 @@ namespace PlotterHelper {
         /// <param name="width">The width of the cut [px]</param>
         /// <param name="height">The height of the cut [px]</param>
         /// <returns>The cut portion</returns>
-        public static Bitmap CutToSize(Bitmap input, int left, int top, int width, int height) {
+        public static Bitmap CutToSize(Bitmap input, int left, int top, int width, int height, Settings settings) {
             // creating output
             Bitmap output = new Bitmap(width, height);
             // creating graphics, copying the image part
@@ -43,16 +34,21 @@ namespace PlotterHelper {
             return output;
         }
 
-        // TODO: handle if print is too big, cannot print
-
-        public static BitmapImage PlaceImage(Bitmap input, int count, double dpiX, double dpiY) {
+        public static BitmapImage PlaceImage(Bitmap input, int count, double dpiX, double dpiY, Settings settings) {
             // getting the length and count values from the different cut policies
             (int rowCount, int columnCount, double totalLength) lengthwise = GetLengthwiseLength(input, count, 
-                dpiX, dpiY);
+                dpiX, dpiY, settings);
             (int rowCount, int columnCount, double totalLength) crosswise = GetCrosswiseLength(input, count, 
-                dpiX, dpiY);
+                dpiX, dpiY, settings);
             (int crosswiseRowCount, int crosswiseColumnCount, int lengthwiseRowCount, int lengthwiseColumnCount,
-                double totalLength) mixed = GetMixedwiseLength(input, count, dpiX, dpiY);
+                double totalLength) mixed = GetMixedwiseLength(input, count, dpiX, dpiY, settings);
+            // cannot print check
+            if (lengthwise.totalLength == double.MaxValue && 
+                crosswise.totalLength == double.MaxValue && 
+                mixed.totalLength == double.MaxValue) {
+                // returning null
+                return null;
+            }
             // calcualting the minimum value
             if (lengthwise.totalLength <= crosswise.totalLength && lengthwise.totalLength <= mixed.totalLength) {
                 // lengthwise
@@ -206,14 +202,14 @@ namespace PlotterHelper {
         /// <param name="count">The count of image parts</param>
         /// <returns>The row and column count and the total print length [inches]</returns>
         private static (int rowCount, int columnCount, double totalLength) GetLengthwiseLength(Bitmap image,
-            int count, double dpiX, double dpiY) {
+            int count, double dpiX, double dpiY, Settings settings) {
             // sizes [inches]
             double widthInches = image.Width / dpiX;
             double heightInches = image.Height / dpiY;
             // width check
-            if (widthInches > PRINTER_WIDTH) { return (0, 0, double.MaxValue); }
+            if (widthInches > settings.PrinterWidth) { return (0, 0, double.MaxValue); }
             // calculating the number of columns
-            int maxColumnCount = (int)(PRINTER_WIDTH / widthInches);
+            int maxColumnCount = (int)(settings.PrinterWidth / widthInches);
             // calculating the step height [inches]
             double stepHeight = heightInches / count;
             // calculating the row count
@@ -232,16 +228,16 @@ namespace PlotterHelper {
         /// <param name="count">The count of image parts</param>
         /// <returns>The total length [inches]</returns>
         private static (int rowCount, int columnCount, double totalLength) GetCrosswiseLength(Bitmap image, 
-            int count, double dpiX, double dpiY) {
+            int count, double dpiX, double dpiY, Settings settings) {
             // sizes [inches]
             double widthInches = image.Width / dpiX;
             double heightInches = image.Height / dpiY;
             // calculating the step height [inches]
             double stepHeight = heightInches / count;
             // step height check
-            if (stepHeight > PRINTER_WIDTH) { return (0, 0, double.MaxValue); }
+            if (stepHeight > settings.PrinterWidth) { return (0, 0, double.MaxValue); }
             // calculating the number of columns
-            int columnCount = (int)(PRINTER_WIDTH / stepHeight);
+            int columnCount = (int)(settings.PrinterWidth / stepHeight);
             // calculating the number of rows
             int rowcount = (int)Math.Ceiling(count / (double)columnCount);
             // calculating the number of rows
@@ -259,24 +255,24 @@ namespace PlotterHelper {
         /// <returns>The total length [inches]</returns>
         private static (int crosswiseRowCount, int crosswiseColumnCount, int lengthwiseRowCount, 
             int lengthwiseColumnCount, double totalLength) GetMixedwiseLength(Bitmap image, int count, 
-            double dpiX, double dpiY) {
+            double dpiX, double dpiY, Settings settings) {
             // sizes [inches]
             double widthInches = image.Width / dpiX;
             double heightInches = image.Height / dpiY;
             // width check
-            if (widthInches > PRINTER_WIDTH) { return (0, 0, 0, 0, double.MaxValue); }
+            if (widthInches > settings.PrinterWidth) { return (0, 0, 0, 0, double.MaxValue); }
             // calculating the step height [inches]
             double stepHeight = heightInches / count;
             // step height check
-            if (stepHeight > PRINTER_WIDTH) { return (0, 0, 0, 0, double.MaxValue); }
+            if (stepHeight > settings.PrinterWidth) { return (0, 0, 0, 0, double.MaxValue); }
             // calculating the number of crosswise columns
-            int crosswiseColumnCount = Math.Min((int)(PRINTER_WIDTH / stepHeight), count);
+            int crosswiseColumnCount = Math.Min((int)(settings.PrinterWidth / stepHeight), count);
             // calculating the number of crosswise rows
             int crosswiseRowCount = Math.Max(count / crosswiseColumnCount, 1);
             // calculating the number of lengthwise pieces
             int lengthwiseCount = count - (crosswiseColumnCount * crosswiseRowCount);
             // calculating the number of lengthwise columns
-            int lengthwiseColumnCount = (int)(PRINTER_WIDTH / widthInches);
+            int lengthwiseColumnCount = (int)(settings.PrinterWidth / widthInches);
             // calculating the (maximum) lengthwise row count
             int lengthwiseRowCount = (int)Math.Ceiling(lengthwiseCount / (double)lengthwiseColumnCount);
             // calculating the total length

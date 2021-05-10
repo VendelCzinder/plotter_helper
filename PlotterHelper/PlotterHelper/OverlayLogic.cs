@@ -8,20 +8,12 @@ using System.Threading.Tasks;
 namespace PlotterHelper {
     public static class OverlayLogic {
 
-        // constants
-        private const double LINE_LENGTH = 0.25; // inch
-        private const double LINE_WIDTH = 0.02; // inch
-        private const double TEXT_TOP_MARGIN = 0.1; // inch
-        private const double TEXT_RIGHT_MARGIN = 0.02; // inch
-        private const double TEXT_SIZE = 0.1; // inch
-        private const int COLOR_ALPHA = 200; // in pixel intensity [0-255]
-
-        public static void RenderOverlay(Bitmap input, int count, double dpiX, double dpiY) {
+        public static void RenderOverlay(Bitmap input, int count, double dpiX, double dpiY, Settings settings) {
             // calculating sizes
-            double lineLength = LINE_LENGTH * dpiX;
-            double lineWidth = LINE_WIDTH * dpiY;
-            double textSize = TEXT_SIZE * dpiX;
-            double textRightMargin = TEXT_RIGHT_MARGIN * dpiX;
+            double lineLength = settings.LineLength * dpiX;
+            double lineWidth = settings.LineWidth * dpiY;
+            double textSize = settings.TextSize * dpiX;
+            double textRightMargin = settings.TextRightMargin * dpiX;
             double step = input.Height / (double)count;
             // creating the font
             Font font = new Font(FontFamily.GenericSansSerif, (float)textSize);
@@ -35,10 +27,10 @@ namespace PlotterHelper {
                 string number = (count - i).ToString();
                 // drawing the lines (if not the first cut)
                 if (i != 0) {
-                    DrawLines(input, graphics, input.Width, (float)lineLength, lineTop, lineWidth);
+                    DrawLines(input, graphics, input.Width, (float)lineLength, lineTop, lineWidth, settings);
                 }
                 // drawing the text
-                DrawText(input, graphics, number, font, lineTop, lineWidth, textRightMargin);
+                DrawText(input, graphics, number, font, lineTop, lineWidth, textRightMargin, settings);
             }
             // saving the drawing
             graphics.Flush();
@@ -67,7 +59,7 @@ namespace PlotterHelper {
         }
 
         private static void DrawLines(Bitmap bmp, Graphics graphics, int totalWidth, float lineLength, float lineTop,
-            double lineWidth) {
+            double lineWidth, Settings settings) {
             // calculating positions for left line
             float x1 = 0;
             float y = lineTop;
@@ -76,7 +68,7 @@ namespace PlotterHelper {
             Color averageColor = GetAverageColor(bmp, (int)x1,
                 (int)(lineTop - (lineWidth / 2)),
                 (int)lineLength, (int)(lineTop + (lineWidth / 2)));
-            Color offsetColor = GetOffsetColor(averageColor, COLOR_ALPHA);
+            Color offsetColor = GetOffsetColor(averageColor, settings.ColorAlpha);
             // drawing the left line
             graphics.DrawLine(new Pen(offsetColor, (float)lineWidth), x1, y, x2, y);
             // calculating positions for righ line
@@ -86,15 +78,15 @@ namespace PlotterHelper {
             averageColor = GetAverageColor(bmp, (int)x1,
                 (int)(lineTop - (lineWidth / 2)),
                 (int)lineLength, (int)(lineTop + (lineWidth / 2)));
-            offsetColor = GetOffsetColor(averageColor, COLOR_ALPHA);
+            offsetColor = GetOffsetColor(averageColor, settings.ColorAlpha);
             // drawing the righ line
             graphics.DrawLine(new Pen(offsetColor, (float)lineWidth), x1, y, x2, y);
         }
 
         private static void DrawText(Bitmap bmp, Graphics graphics, string text, Font font, float lineTop,
-            double lineWidth, double textRightMargin) {
+            double lineWidth, double textRightMargin, Settings settings) {
             // calculating the top position for the text
-            float textTop = (float)(lineTop + lineWidth + TEXT_TOP_MARGIN);
+            float textTop = (float)(lineTop + lineWidth + settings.TextTopMargin);
             // calculating text size
             SizeF textSize = graphics.MeasureString(text, font);
             // left position
@@ -102,7 +94,7 @@ namespace PlotterHelper {
             // getting the color and offset color for left line
             Color averageColor = GetAverageColor(bmp, (int)textLeft, (int)textTop,
                 (int)textSize.Width, (int)textSize.Height);
-            Color offsetColor = GetOffsetColor(averageColor, COLOR_ALPHA);
+            Color offsetColor = GetOffsetColor(averageColor, settings.ColorAlpha);
             // drawing the text
             graphics.DrawString(text, font, new SolidBrush(offsetColor), new PointF(textLeft, textTop));
         }

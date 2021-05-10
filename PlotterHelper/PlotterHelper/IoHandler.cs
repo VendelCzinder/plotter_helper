@@ -1,4 +1,5 @@
-﻿using PdfSharp.Drawing;
+﻿using Newtonsoft.Json;
+using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 using Svg;
 using System;
@@ -9,6 +10,8 @@ using System.Windows.Media.Imaging;
 namespace PlotterHelper {
 
     class IoHandler {
+
+        private const string SETTINGS_FILE_NAME = "setting.json";
 
         private static readonly string[] rasterTypes = { ".jpg", ".jpeg", ".png" };
         private static readonly string[] vectorTypes = { ".svg" };
@@ -46,6 +49,27 @@ namespace PlotterHelper {
             graphics.DrawImage(image, 0, 0);
             // saving the file
             pdf.Save(path);
+        }
+
+        public static void SaveSettings(Settings settings) {
+            // getting the data folder
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            // saving data
+            File.WriteAllText(Path.Join(path, SETTINGS_FILE_NAME), JsonConvert.SerializeObject(settings));
+        }
+
+        public static Settings LoadSettings() {
+            // getting the data folder
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            // does the file exist?
+            if (File.Exists(Path.Join(path, SETTINGS_FILE_NAME))) {
+                // getting data
+                return JsonConvert.DeserializeObject<Settings>(File.ReadAllText(Path.Join(path, SETTINGS_FILE_NAME)));
+            }
+            else {
+                // returning the default settings object
+                return new Settings();
+            }
         }
     }
 }

@@ -1,0 +1,65 @@
+﻿<Window x:Class="PlotterHelper.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PlotterHelper"
+        mc:Ignorable="d"
+        Loaded="WindowLoaded"
+        SizeToContent="WidthAndHeight"
+        Title="SettingsWindow">
+    <Grid>
+        <StackPanel Width="350" Margin="5">
+            <GroupBox Header="Printer">
+                <StackPanel>
+                    <Grid Margin="0, 5, 0, 5">
+                        <Label Content="Printer width [inches]" HorizontalAlignment="Left"/>
+                        <TextBox HorizontalAlignment="Right" Width="50" Name="printerWidth" Text="0"
+                            HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="Image overlay">
+                <StackPanel>
+                    <Grid Margin="0, 5, 0, 5">
+                        <Label Content="Line length [inches]" HorizontalAlignment="Left"/>
+                        <TextBox HorizontalAlignment="Right" Width="50" Name="lineLength" Text="0"
+                            HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+                    </Grid>
+                    <Grid Margin="0, 5, 0, 5">
+                        <Label Content="Line strength [inches]" HorizontalAlignment="Left"/>
+                        <TextBox HorizontalAlignment="Right" Width="50" Name="lineWidth" Text="0"
+                            HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+                    </Grid>
+                    <Grid Margin="0, 5, 0, 5">
+                        <Label Content="Text top margin [inches]" HorizontalAlignment="Left"/>
+                        <TextBox HorizontalAlignment="Right" Width="50" Name="textTopMargin" Text="0"
+                            HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+                    </Grid>
+                    <Grid Margin="0, 5, 0, 5">
+                        <Label Content="Text right margin [inches]" HorizontalAlignment="Left"/>
+                        <TextBox HorizontalAlignment="Right" Width="50" Name="textRightMargin" Text="0"
+                            HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+                    </Grid>
+                    <Grid Margin="0, 5, 0, 5">
+                        <Label Content="TextSize [inches]" HorizontalAlignment="Left"/>
+                        <TextBox HorizontalAlignment="Right" Width="50" Name="textSize" Text="0"
+                            HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+                    </Grid>
+                    <Grid Margin="0, 5, 0, 5">
+                        <Label Content="Overlay strength [0-255] (higher is more visible)" 
+                               HorizontalAlignment="Left"/>
+                        <TextBox HorizontalAlignment="Right" Width="50" Name="colorAlpha" Text="0"
+                            HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="Operations">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Content="Reset defaults" Width="150" Margin="5" Click="ResetDefaultsClick"/>
+                    <Button Content="Save and close window" Width="150" Margin="5" Click="SaveClick"/>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
+    </Grid>
+</Window>
