@@ -38,6 +38,8 @@ namespace PlotterHelper {
             LoadImage();
             // setting default cut border
             SetUiToDefaults();
+            // showing image information
+            SetImageInfo();
         }
 
         private void ResizeCutButtonClick(object sender, RoutedEventArgs e) {
@@ -258,6 +260,15 @@ namespace PlotterHelper {
             SetSliderMaximums();
             // and actual value
             SetSliderPositions();
+        }
+
+        private void SetImageInfo() {
+            imageInfo.Text = $"Pixel resolution (width x height)\n" +
+                $" {(int)bitmapImage.Width} x {(int)bitmapImage.Height}\n" +
+                $"Pixel density (horizontal x vertical) [DPI]\n" +
+                $"{bitmapImage.DpiX.ToString("0.##")} x {bitmapImage.DpiY.ToString("0.##")}\n" +
+                $"Image size (width x height) [inches]\n" +
+                $"{bitmapImage.WidthInches().ToString("0.##")} x {bitmapImage.HeightInches().ToString("0.##")}";
         }
 
         /// <summary>

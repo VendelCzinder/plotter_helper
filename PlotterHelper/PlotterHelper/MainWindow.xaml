@@ -22,13 +22,17 @@
         </Grid>
 
         <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="10" Grid.Column="0">
-            <GroupBox Header="Settings">
+            <GroupBox Padding="0,5,0,0" Header="Settings">
                 <Button Content="Open settings" Click="OpenSettingsClick"/>
             </GroupBox>
-            <GroupBox Header="Input">
-                <Button Content="Load Image" Click="LoadImageButtonClick"/>
+            <GroupBox Padding="0,5,0,0" Header="Input">
+                <StackPanel>
+                    <Button Content="Load Image" Click="LoadImageButtonClick"/>
+                    <TextBlock Name="imageInfo" Text="No image has been loaded" 
+                        TextAlignment="Center" Margin="0,5,0,5"/>
+                </StackPanel>
             </GroupBox>
-            <GroupBox Header="Cut size">
+            <GroupBox Padding="0,5,0,0" Header="Cut size">
                 <StackPanel>
                     <Grid Margin="0, 5, 0, 5">
                         <Label Content="Required width [inches]" HorizontalAlignment="Left"/>
@@ -60,7 +64,7 @@
                     
                 </StackPanel>
             </GroupBox>
-            <GroupBox Header="Cut position" Padding="5,5,5,5">
+            <GroupBox Padding="0,5,0,0" Header="Cut position">
                 <Grid>
                     <Slider VerticalAlignment="Top" HorizontalAlignment="Stretch"
                         Orientation="Horizontal" Minimum="0" Maximum="0" Name="cutSliderX"
@@ -80,7 +84,7 @@
                     </Slider>
                 </Grid>
             </GroupBox>
-            <GroupBox Header="Output">
+            <GroupBox Padding="0,5,0,0" Header="Output">
                 <Button x:Name="saveImageButton" Content="Process and save to PDF" 
                         Click="SavePdfButtonClick" IsEnabled="False"/>
             </GroupBox>
