@@ -12,7 +12,7 @@ namespace PlotterHelper {
         /// </summary>
         /// <param name="bitmap">A bitmap image, both PixelWidth and DpiX must be set!</param>
         /// <returns>The width of the image in inches</returns>
-        public static double WidthInches(this BitmapImage bitmap) { 
+        public static double WidthInches(this BitmapSource bitmap) { 
             return bitmap.PixelWidth / bitmap.DpiX;
         }
 
@@ -21,7 +21,7 @@ namespace PlotterHelper {
         /// </summary>
         /// <param name="bitmap">A bitmap image, both PixelHeight and DpiY must be set!</param>
         /// <returns>The height of the image in inches</returns>
-        public static double HeightInches(this BitmapImage bitmap) {
+        public static double HeightInches(this BitmapSource bitmap) {
             return bitmap.PixelHeight / bitmap.DpiY;
         }
 

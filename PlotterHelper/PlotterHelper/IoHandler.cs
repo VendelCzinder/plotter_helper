@@ -39,8 +39,8 @@ namespace PlotterHelper {
             // creating a page
             PdfPage page = pdf.AddPage();
             // setting the page size
-            page.Width = XUnit.FromInch(bitmap.Width / bitmap.DpiX);
-            page.Height = XUnit.FromInch(bitmap.Height / bitmap.DpiY);
+            page.Width = XUnit.FromInch(bitmap.WidthInches());
+            page.Height = XUnit.FromInch(bitmap.HeightInches());
             // creating graphics
             XGraphics graphics = XGraphics.FromPdfPage(page);
             // creating image

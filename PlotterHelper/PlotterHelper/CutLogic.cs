@@ -21,6 +21,7 @@ namespace PlotterHelper {
         public static Bitmap CutToSize(Bitmap input, int left, int top, int width, int height, Settings settings) {
             // creating output
             Bitmap output = new Bitmap(width, height);
+            output.SetResolution(input.HorizontalResolution, input.VerticalResolution);
             // creating graphics, copying the image part
             using Graphics graphics = Graphics.FromImage(output);
             graphics.DrawImage(
