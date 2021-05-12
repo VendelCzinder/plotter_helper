@@ -236,8 +236,8 @@ namespace PlotterHelper {
             double stepHeight = heightInches / count;
             // step height check
             if (stepHeight > settings.PrinterWidth) { return (0, 0, double.MaxValue); }
-            // calculating the number of columns
-            int columnCount = (int)(settings.PrinterWidth / stepHeight);
+            // calculating the number of columns (but no more than the cut count)
+            int columnCount = Math.Min((int)(settings.PrinterWidth / stepHeight), count);
             // calculating the number of rows
             int rowcount = (int)Math.Ceiling(count / (double)columnCount);
             // calculating the number of rows
