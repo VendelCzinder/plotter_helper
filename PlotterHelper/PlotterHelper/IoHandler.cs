@@ -33,20 +33,23 @@ namespace PlotterHelper {
             return null;
         }
 
-        public static void SaveToPdf(BitmapSource bitmap, string path) {
+        public static void SaveToPdf(BitmapSource bitmap, string path, double width, double height) {
             // creating a pdf file
             PdfDocument pdf = new PdfDocument();
             // creating a page
             PdfPage page = pdf.AddPage();
             // setting the page size
-            page.Width = XUnit.FromInch(bitmap.WidthInches());
-            page.Height = XUnit.FromInch(bitmap.HeightInches());
+            page.Width = XUnit.FromInch(width);
+            page.Height = XUnit.FromInch(height);
             // creating graphics
             XGraphics graphics = XGraphics.FromPdfPage(page);
             // creating image
             XImage image = XImage.FromBitmapSource(bitmap);
             // writing image
-            graphics.DrawImage(image, 0, 0);
+            graphics.DrawImage(image, 
+                new XRect(0, 0, page.Width, page.Height),
+                new XRect(0, 0, bitmap.WidthInches(), bitmap.HeightInches()), 
+                XGraphicsUnit.Inch);
             // saving the file
             pdf.Save(path);
         }

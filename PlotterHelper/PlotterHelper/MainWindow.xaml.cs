@@ -305,7 +305,9 @@ namespace PlotterHelper {
             // getting the filename
             string path = dialog.FileName;           
             // saving the file
-            IoHandler.SaveToPdf(bitmapImage, path);            
+            IoHandler.SaveToPdf(bitmapImage, path, 
+                double.Parse(cutWidthInput.Text),
+                double.Parse(cutHeightInput.Text));
         }
 
     }
