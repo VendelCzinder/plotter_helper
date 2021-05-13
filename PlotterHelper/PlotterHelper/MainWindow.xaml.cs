@@ -303,7 +303,7 @@ namespace PlotterHelper {
             // no file is selected, returning
             if (result != true) { return; }
             // getting the filename
-            string path = dialog.FileName;           
+            string path = dialog.FileName;
             // saving the file
             IoHandler.SaveToPdf(bitmapImage, path, 
                 double.Parse(cutWidthInput.Text),
