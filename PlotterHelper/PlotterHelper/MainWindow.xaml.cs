@@ -264,7 +264,7 @@ namespace PlotterHelper {
 
         private void SetImageInfo() {
             imageInfo.Text = $"Pixel resolution (width x height)\n" +
-                $" {(int)bitmapImage.Width} x {(int)bitmapImage.Height}\n" +
+                $" {(int)bitmapImage.PixelWidth} x {(int)bitmapImage.PixelHeight}\n" +
                 $"Pixel density (horizontal x vertical) [DPI]\n" +
                 $"{bitmapImage.DpiX.ToString("0.##")} x {bitmapImage.DpiY.ToString("0.##")}\n" +
                 $"Image size (width x height) [inches]\n" +
@@ -295,7 +295,7 @@ namespace PlotterHelper {
         /// <summary>
         /// Saves the selected region to a PDF file.
         /// </summary>
-        private void SavePdf(BitmapImage bitmapImage) {
+        private void SavePdf(BitmapImage image) {
             // creating a save file dialog, setting filter, opening
             SaveFileDialog dialog = new SaveFileDialog();
             dialog.Filter = "PDF files (*.pdf) | *.pdf";
@@ -305,9 +305,7 @@ namespace PlotterHelper {
             // getting the filename
             string path = dialog.FileName;
             // saving the file
-            IoHandler.SaveToPdf(bitmapImage, path, 
-                double.Parse(cutWidthInput.Text),
-                double.Parse(cutHeightInput.Text));
+            IoHandler.SaveToPdf(image, path, bitmapImage.DpiX, bitmapImage.DpiY);
         }
 
     }

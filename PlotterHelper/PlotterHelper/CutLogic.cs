@@ -116,7 +116,7 @@ namespace PlotterHelper {
             // clearing the bitmap to white
             graphics.Clear(Color.White);
             // copying parts to the output image
-            for (int i = 0; i < columnCount; i++) {
+            for (int i = 0; i < rowCount; i++) {
                 // source cut left (top is always zero)
                 int sourceCutLeft = (int)Math.Round(columnCount * stepWidth * i);
                 // source cut right (and right of image overflow check)
