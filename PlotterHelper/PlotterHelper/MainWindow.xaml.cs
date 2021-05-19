@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using System;
 using System.Text;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -16,6 +17,7 @@ namespace PlotterHelper {
 
         private Settings settings = null;
         private BitmapImage bitmapImage = null;
+        private Rect cutArea = new Rect(0, 0, 0, 0); // parameters in inches!
 
         public MainWindow() {
             InitializeComponent();
@@ -26,7 +28,7 @@ namespace PlotterHelper {
         }
 
         private void WindowSizeChanged(object sender, SizeChangedEventArgs e) {
-            SetUiToDefaults();
+            UpdateUiOnResize();
         }
 
         private void WindowLoaded(object sender, RoutedEventArgs e) {
@@ -107,7 +109,7 @@ namespace PlotterHelper {
                     return;
                 }
                 // range check
-                if (width <= 0 || width > bitmapImage.WidthInches() + 0.01) {
+                if (height > bitmapImage.HeightInches() + 0.01) {
                     // error
                     MessageBox.Show("The cut height must be between zero and the height of the image!",
                         "Error - wrong input",
@@ -118,8 +120,14 @@ namespace PlotterHelper {
                 // updating the step height textbox
                 stepHeightInput.Text = stepHeight.ToString("0.##");
             }
+            // storing the size
+            cutArea.Size = new Size(width, height);
             // resizing the cut
-            ResizeCut(width, height);
+            ResizeCutControl();
+            // setting slider maximums
+            SetSliderMaximums();
+            // enabling button
+            saveImageButton.IsEnabled = true;
         }
 
         private void SavePdfButtonClick(object sender, RoutedEventArgs e) {
@@ -128,12 +136,12 @@ namespace PlotterHelper {
             spinner.UpdateLayout();
             // cutting, drawing marks, writing text
             BitmapImage procesedImage = Logic.ProcessImage(
-                bitmapImage, 
-                (int)(cutSliderX.Value / preview.ActualWidth * bitmapImage.PixelWidth), 
-                (int)(cutSliderY.Value / preview.ActualHeight * bitmapImage.PixelHeight), 
-                (int)(double.Parse(cutWidthInput.Text) * bitmapImage.DpiX), 
-                (int)(double.Parse(cutHeightInput.Text) * bitmapImage.DpiY),
-                int.Parse(stepCountInput.Text), 
+                bitmapImage,
+                (int)Math.Round(cutArea.Left * bitmapImage.DpiX), 
+                (int)Math.Round(cutArea.Top * bitmapImage.DpiY),
+                (int)Math.Round(double.Parse(cutWidthInput.Text) * bitmapImage.DpiX), 
+                (int)Math.Round(double.Parse(cutHeightInput.Text) * bitmapImage.DpiY),
+                int.Parse(stepCountInput.Text),
                 settings);
             // null check
             if (procesedImage == null) {
@@ -164,37 +172,44 @@ namespace PlotterHelper {
         private void CutSliderXValueChange(object sender, RoutedPropertyChangedEventArgs<double> e) {
             // not yet initialized check
             if (cutSliderX == null || cutSliderY == null) { return; }
-            // setting new margin (by the slider values)
-            cutBorder.Margin = new Thickness(cutSliderX.Value, cutSliderY.Value, 0, 0);
+            // updating the cutArea location
+            cutArea.Location = new Point(cutSliderX.Value, cutSliderY.Value);
+            // updating the cut border's position
+            RepositionCutControl();
         }
 
         private void CutSliderYValueChange(object sender, RoutedPropertyChangedEventArgs<double> e) {
             // not yet initialized check
             if (cutSliderX == null || cutSliderY == null) { return; }
-            // setting new margin (by the slider values)
-            cutBorder.Margin = new Thickness(cutSliderX.Value, cutSliderY.Value, 0, 0);
+            // updating the cutArea location
+            cutArea.Location = new Point(cutSliderX.Value, cutSliderY.Value);
+            // updating the cut border's position
+            RepositionCutControl();
+        }
+
+        private void RepositionCutControl() {
+            // calculating sizes
+            double left = cutArea.Left / bitmapImage.WidthInches() * preview.ActualWidth;
+            double top = cutArea.Top / bitmapImage.HeightInches() * preview.ActualHeight;
+            // setting the margin
+            cutBorder.Margin = new Thickness(left, top, 0, 0);
         }
 
         /// <summary>
         /// Resizes the cut control.
         /// </summary>
-        /// <param name="width">The requested width in inches</param>
-        /// <param name="height">The requested height in inches</param>
-        private void ResizeCut(double width, double height) {
+        /// <param name="width">The requested width [inches]</param>
+        /// <param name="height">The requested height [inches]</param>
+        private void ResizeCutControl() {
             // range constraints
-            if (width < MIN_CUT_WIDTH) { width = MIN_CUT_WIDTH; }
-            if (height < MIN_CUT_HEIGHT) { width = MIN_CUT_HEIGHT; }
-            if (width > bitmapImage.WidthInches()) { width = bitmapImage.WidthInches(); }
-            if (height > bitmapImage.HeightInches()) { height = bitmapImage.HeightInches(); }
+            if (cutArea.Width < MIN_CUT_WIDTH) { cutArea.Width = MIN_CUT_WIDTH; }
+            if (cutArea.Height < MIN_CUT_HEIGHT) { cutArea.Height = MIN_CUT_HEIGHT; }
+            if (cutArea.Width > bitmapImage.WidthInches()) { cutArea.Width = bitmapImage.WidthInches(); }
+            if (cutArea.Height > bitmapImage.HeightInches()) { cutArea.Height = bitmapImage.HeightInches(); }
             // calculating the cut size in pixels
-            cutBorder.Width = width / bitmapImage.WidthInches() * preview.ActualWidth;
-            cutBorder.Height = height / bitmapImage.HeightInches() * preview.ActualHeight;
+            cutBorder.Width = cutArea.Width / bitmapImage.WidthInches() * preview.ActualWidth;
+            cutBorder.Height = cutArea.Height / bitmapImage.HeightInches() * preview.ActualHeight;
             cutBorder.UpdateLayout();
-            // setting slider maximums
-            SetSliderMaximums();
-            SetSliderPositions();
-            // enabling button
-            saveImageButton.IsEnabled = true;
         }
 
         /// <summary>
@@ -247,19 +262,29 @@ namespace PlotterHelper {
         private void SetUiToDefaults() {
             // null check
             if (bitmapImage == null) { return; }
-            // setting cut size (by the image dimensions)
+            // setting inputs
             cutWidthInput.Text = bitmapImage.WidthInches().ToString("0.##");
             cutHeightInput.Text = bitmapImage.HeightInches().ToString("0.##");
-            // setting the margin of the cut to the top-left of the image
-            cutBorder.Margin = new Thickness(0, 0, 0, 0);
-            // setting the size of the cut to the size of the image
-            cutBorder.Width = preview.ActualWidth;
-            cutBorder.Height = preview.ActualHeight;
-            cutBorder.UpdateLayout();
+            stepHeightInput.Text = string.Empty;
+            // resetting sliders
+            ResetSliders();
+            // setting the cut area
+            cutArea.Location = new Point(0, 0);
+            cutArea.Size = new Size(bitmapImage.WidthInches(), bitmapImage.HeightInches());
             // setting the sliders maximum...
             SetSliderMaximums();
-            // and actual value
-            SetSliderPositions();
+            // updating the cut border
+            RepositionCutControl();
+            ResizeCutControl();
+        }
+
+        private void UpdateUiOnResize() {
+            // null check
+            if (bitmapImage == null) { return; }
+            // resizing the cut border
+            ResizeCutControl();
+            // repositioning the cut border
+            RepositionCutControl();
         }
 
         private void SetImageInfo() {
@@ -273,21 +298,20 @@ namespace PlotterHelper {
 
         /// <summary>
         /// Sets the maximum values of the sliders according to the size difference of the image and the cur border.
+        /// Sliders are in inches!
         /// </summary>
         private void SetSliderMaximums() {
             // setting the sliders maximum...
-            cutSliderX.Maximum = preview.ActualWidth - cutBorder.ActualWidth;
-            cutSliderY.Maximum = preview.ActualHeight - cutBorder.ActualHeight;
+            cutSliderX.Maximum = bitmapImage.WidthInches() - cutArea.Width;
+            cutSliderY.Maximum = bitmapImage.HeightInches() - cutArea.Height;
             cutSliderX.UpdateLayout();
             cutSliderY.UpdateLayout();
         }
 
-        /// <summary>
-        /// Sets the values of the sliders according to the cut border margin.
-        /// </summary>
-        private void SetSliderPositions() {
-            cutSliderX.Value = cutBorder.Margin.Left;
-            cutSliderY.Value = cutBorder.Margin.Top;
+        private void ResetSliders() {
+            // setting the sliders to zero
+            cutSliderX.Value = 0;
+            cutSliderY.Value = 0;
             cutSliderX.UpdateLayout();
             cutSliderY.UpdateLayout();
         }
