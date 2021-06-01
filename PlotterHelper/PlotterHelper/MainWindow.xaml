@@ -12,7 +12,7 @@
         Title="Image Slicer">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="300"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
@@ -32,14 +32,34 @@
                         TextAlignment="Center" Margin="0,5,0,5"/>
                 </StackPanel>
             </GroupBox>
+            <GroupBox Padding="0,5,0,0" Header="Rescale">
+                <StackPanel>
+                    <Grid>
+                        <ComboBox Name="rescaleDropdown" Width="200" HorizontalAlignment="Left" Margin="0,0,0,5">
+                            <ComboBoxItem Tag="0" Content="Please chose an option" IsSelected="True"/>
+                            <ComboBoxItem Tag="1" Content="Scale factor [%] (100 = original)"/>
+                            <ComboBoxItem Tag="2" Content="New image width [inches]"/>
+                            <ComboBoxItem Tag="3" Content="New image height [inches]"/>
+                            <ComboBoxItem Tag="4" Content="New cut width [inches]"/>
+                            <ComboBoxItem Tag="5" Content="New cut height [inches]"/>
+                            <ComboBoxItem Tag="6" Content="New horizontal pixel density [DPI]"/>
+                            <ComboBoxItem Tag="7" Content="New vertical pixel density [DPI]"/>
+                        </ComboBox>
+                        <TextBox Margin="5,0,0,5" HorizontalAlignment="Right" Width="50" Name="rescaleValue" Text="0"
+                            HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+                    </Grid>
+                    <Button x:Name="rescaleButton" Content="Rescale image"
+                        Click="RescaleButtonClick" IsEnabled="False"/>
+                </StackPanel>
+            </GroupBox>
             <GroupBox Padding="0,5,0,0" Header="Cut size">
                 <StackPanel>
-                    <Grid Margin="0, 5, 0, 5">
+                    <Grid>
                         <Label Content="Required width [inches]" HorizontalAlignment="Left"/>
                         <TextBox HorizontalAlignment="Right" Width="50" Name="cutWidthInput" Text="0"
                             HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
                     </Grid>
-                    <Grid Margin="0, 5, 0, 5">
+                    <Grid Margin="0, 5, 0, 0">
                         <Label Content="Required height [inches]" HorizontalAlignment="Left"/>
                         <TextBox HorizontalAlignment="Right" Width="50" Name="cutHeightInput" Text="0"
                             HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
@@ -47,7 +67,7 @@
                     
                     <Label Content="OR" HorizontalAlignment="Center" FontWeight="Bold"/>
 
-                    <Grid Margin="0, 5, 0, 5">
+                    <Grid Margin="0, 0, 0, 5">
                         <Label Content="Step height [inches]" HorizontalAlignment="Left"/>
                         <TextBox HorizontalAlignment="Right" Width="50" Name="stepHeightInput" Text="0"
                             HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>

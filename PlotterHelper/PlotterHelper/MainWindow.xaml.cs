@@ -2,6 +2,7 @@
 using System;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 
 namespace PlotterHelper {
@@ -10,14 +11,27 @@ namespace PlotterHelper {
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window {
-        
+
+        // THESE MUST BE THE SAME AS THE COMBOBOX ON THE MAIN WINDOW! (no binding, it's complicated - sorry)
+        enum RescaleOption {
+            Nothing = 0,
+            ScaleFactor = 1,
+            ImageWidth = 2,
+            ImageHeight = 3,
+            CutWidth = 4,
+            CutHeight = 5,
+            HorizontalDpi = 6,
+            VerticalDpi = 7
+        }
+
         // constants
         private const double MIN_CUT_WIDTH = 1; // inches
         private const double MIN_CUT_HEIGHT = 1; // inches
 
         private Settings settings = null;
         private BitmapImage bitmapImage = null;
-        private Rect cutArea = new Rect(0, 0, 0, 0); // parameters in inches!
+        private Point requestedDpi = new Point(0, 0); // [dpi] (X and Y)
+        private Rect cutArea = new Rect(0, 0, 0, 0); // all values are [inches]
 
         public MainWindow() {
             InitializeComponent();
@@ -27,6 +41,8 @@ namespace PlotterHelper {
             settings = IoHandler.LoadSettings();
         }
 
+        #region WindowEvents
+
         private void WindowSizeChanged(object sender, SizeChangedEventArgs e) {
             UpdateUiOnResize();
         }
@@ -35,12 +51,66 @@ namespace PlotterHelper {
             MinHeight = Height;
         }
 
+        #endregion
+
+        #region ButtonClicks
+
         private void LoadImageButtonClick(object sender, RoutedEventArgs e) {
             // loading image
             LoadImage();
             // setting default cut border
             SetUiToDefaults();
             // showing image information
+            SetImageInfo();
+        }
+
+        private void RescaleButtonClick(object sender, RoutedEventArgs e) {
+            // is an image loaded?
+            if (bitmapImage == null) {
+                // error
+                MessageBox.Show("Please load an image first!", "Error - missing image",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            // getting the dropdown value
+            RescaleOption rescaleOption = Enum.Parse<RescaleOption>(
+                (rescaleDropdown.SelectedItem as ComboBoxItem).Tag.ToString());
+            // drowdown check
+            if (rescaleOption == RescaleOption.Nothing) {
+                // error
+                MessageBox.Show("Please select a rescale option first!", "Error - no rescale option selected",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            // for cut specific methods, checking cut size
+            if ((rescaleOption == RescaleOption.CutWidth || rescaleOption == RescaleOption.CutHeight) &&
+                (cutArea.Width == 0 || cutArea.Height == 0)) {
+                // error
+                MessageBox.Show("For cut size specific values, please specify the cut size!",
+                    "Error - missing data",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            // trying to parse the value
+            if (!double.TryParse(rescaleValue.Text, out double value)) {
+                // error
+                MessageBox.Show("The rescale value must be specified!", "Error - missing data",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            // negative + zero check
+            if (value <= 0) {
+                // error
+                MessageBox.Show("The rescale value be positive!", "Error - wrong input",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            // all is OK, rescaling the image
+            RescaleImage(rescaleOption, value);
+            // updating the GUI
+            SetSliderMaximums();
+            RepositionCutControl();
+            ResizeCutControl();
             SetImageInfo();
         }
 
@@ -53,17 +123,16 @@ namespace PlotterHelper {
                 return;
             }
             // variables
-            double width, height, stepHeight; // [inches]
-            int count;
+            double height; // [inches]
             // trying to get the width
-            if (!double.TryParse(cutWidthInput.Text, out width)) {
+            if (!double.TryParse(cutWidthInput.Text, out double width)) {
                 // error
                 MessageBox.Show("The cut width must be specified!", "Error - missing data",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             // range check
-            if (width <= 0 || width > bitmapImage.WidthInches() + 0.01) {
+            if (width <= 0 || width > bitmapImage.WidthInches(requestedDpi.X) + 0.01) {
                 // error
                 MessageBox.Show("The cut width must be between zero and the width of the image!",
                     "Error - wrong input",
@@ -71,7 +140,7 @@ namespace PlotterHelper {
                 return;
             }
             // trying to get number of steps
-            if (!int.TryParse(stepCountInput.Text, out count)) {
+            if (!int.TryParse(stepCountInput.Text, out int count)) {
                 // error
                 MessageBox.Show("The number of steps must be specified!", "Error - missing data",
                     MessageBoxButton.OK, MessageBoxImage.Error);
@@ -86,10 +155,10 @@ namespace PlotterHelper {
                 return;
             }
             // trying to get the step height
-            if (double.TryParse(stepHeightInput.Text, out stepHeight) && stepHeight != 0) {
+            if (double.TryParse(stepHeightInput.Text, out double stepHeight) && stepHeight != 0) {
                 height = stepHeight * count;
                 // range check
-                if (height > bitmapImage.HeightInches() + 0.01) {
+                if (height > bitmapImage.HeightInches(requestedDpi.Y) + 0.01) {
                     // error
                     MessageBox.Show("The step height times the cut count must not exceed the the image height!",
                         "Error - wrong input",
@@ -109,7 +178,7 @@ namespace PlotterHelper {
                     return;
                 }
                 // range check
-                if (height > bitmapImage.HeightInches() + 0.01) {
+                if (height > bitmapImage.HeightInches(requestedDpi.X) + 0.01) {
                     // error
                     MessageBox.Show("The cut height must be between zero and the height of the image!",
                         "Error - wrong input",
@@ -137,10 +206,11 @@ namespace PlotterHelper {
             // cutting, drawing marks, writing text
             BitmapImage procesedImage = Logic.ProcessImage(
                 bitmapImage,
-                (int)Math.Round(cutArea.Left * bitmapImage.DpiX), 
-                (int)Math.Round(cutArea.Top * bitmapImage.DpiY),
-                (int)Math.Round(double.Parse(cutWidthInput.Text) * bitmapImage.DpiX), 
-                (int)Math.Round(double.Parse(cutHeightInput.Text) * bitmapImage.DpiY),
+                (int)Math.Round(cutArea.Left * requestedDpi.X), 
+                (int)Math.Round(cutArea.Top * requestedDpi.Y),
+                (int)Math.Round(double.Parse(cutWidthInput.Text) * requestedDpi.X), 
+                (int)Math.Round(double.Parse(cutHeightInput.Text) * requestedDpi.Y),
+                requestedDpi.X, requestedDpi.Y,
                 int.Parse(stepCountInput.Text),
                 settings);
             // null check
@@ -169,6 +239,10 @@ namespace PlotterHelper {
             settings = settingsWindow.Settings;
         }
 
+        #endregion
+
+        #region Sliders
+
         private void CutSliderXValueChange(object sender, RoutedPropertyChangedEventArgs<double> e) {
             // not yet initialized check
             if (cutSliderX == null || cutSliderY == null) { return; }
@@ -187,10 +261,64 @@ namespace PlotterHelper {
             RepositionCutControl();
         }
 
+        #endregion
+
+        #region Methods
+
+        private void RescaleImage(RescaleOption rescaleOption, double value) {
+            // variables
+            double baseValue, scale;
+            // getting the base value
+            switch (rescaleOption) {
+                case RescaleOption.ScaleFactor:
+                    baseValue = 100; // as 100% (value = 100) is the original size
+                    // calculating the scale
+                    scale = baseValue / value;
+                    break;
+                case RescaleOption.ImageWidth:
+                    baseValue = bitmapImage.WidthInches(requestedDpi.X);
+                    // calculating the scale
+                    scale = baseValue / value;
+                    break;
+                case RescaleOption.ImageHeight:
+                    baseValue = bitmapImage.HeightInches(requestedDpi.Y);
+                    // calculating the scale
+                    scale = baseValue / value;
+                    break;
+                case RescaleOption.CutWidth:
+                    baseValue = cutArea.Width;
+                    // calculating the scale
+                    scale = baseValue / value;
+                    break;
+                case RescaleOption.CutHeight:
+                    baseValue = cutArea.Height;
+                    // calculating the scale
+                    scale = baseValue / value;
+                    break;
+                case RescaleOption.HorizontalDpi:
+                    baseValue = requestedDpi.X;
+                    // calculating the scale
+                    scale = value / baseValue;
+                    break;
+                case RescaleOption.VerticalDpi:
+                    baseValue = requestedDpi.Y;
+                    // calculating the scale
+                    scale = value / baseValue;
+                    break;
+                default:
+                    throw new ArgumentException("RescaleOption invalid", nameof(rescaleOption));
+            }
+            // setting the new DPI values
+            requestedDpi.X = requestedDpi.X *= scale;
+            requestedDpi.Y = requestedDpi.Y *= scale;
+            // updating the GUI
+
+        }
+
         private void RepositionCutControl() {
             // calculating sizes
-            double left = cutArea.Left / bitmapImage.WidthInches() * preview.ActualWidth;
-            double top = cutArea.Top / bitmapImage.HeightInches() * preview.ActualHeight;
+            double left = cutArea.Left / bitmapImage.WidthInches(requestedDpi.X) * preview.ActualWidth;
+            double top = cutArea.Top / bitmapImage.HeightInches(requestedDpi.Y) * preview.ActualHeight;
             // setting the margin
             cutBorder.Margin = new Thickness(left, top, 0, 0);
         }
@@ -204,11 +332,15 @@ namespace PlotterHelper {
             // range constraints
             if (cutArea.Width < MIN_CUT_WIDTH) { cutArea.Width = MIN_CUT_WIDTH; }
             if (cutArea.Height < MIN_CUT_HEIGHT) { cutArea.Height = MIN_CUT_HEIGHT; }
-            if (cutArea.Width > bitmapImage.WidthInches()) { cutArea.Width = bitmapImage.WidthInches(); }
-            if (cutArea.Height > bitmapImage.HeightInches()) { cutArea.Height = bitmapImage.HeightInches(); }
+            if (cutArea.Width > bitmapImage.WidthInches(requestedDpi.X)) { 
+                cutArea.Width = bitmapImage.WidthInches(requestedDpi.X); 
+            }
+            if (cutArea.Height > bitmapImage.HeightInches(requestedDpi.Y)) { 
+                cutArea.Height = bitmapImage.HeightInches(requestedDpi.Y); 
+            }
             // calculating the cut size in pixels
-            cutBorder.Width = cutArea.Width / bitmapImage.WidthInches() * preview.ActualWidth;
-            cutBorder.Height = cutArea.Height / bitmapImage.HeightInches() * preview.ActualHeight;
+            cutBorder.Width = cutArea.Width / bitmapImage.WidthInches(requestedDpi.X) * preview.ActualWidth;
+            cutBorder.Height = cutArea.Height / bitmapImage.HeightInches(requestedDpi.Y) * preview.ActualHeight;
             cutBorder.UpdateLayout();
         }
 
@@ -252,8 +384,12 @@ namespace PlotterHelper {
             }
             preview.Source = bitmapImage;
             preview.UpdateLayout();
-            // enabling button
+            // setting DPI values
+            requestedDpi.X = bitmapImage.DpiX;
+            requestedDpi.Y = bitmapImage.DpiY;
+            // enabling buttons
             updateCutButton.IsEnabled = true;
+            rescaleButton.IsEnabled = true;
         }
 
         /// <summary>
@@ -263,14 +399,14 @@ namespace PlotterHelper {
             // null check
             if (bitmapImage == null) { return; }
             // setting inputs
-            cutWidthInput.Text = bitmapImage.WidthInches().ToString("0.##");
-            cutHeightInput.Text = bitmapImage.HeightInches().ToString("0.##");
+            cutWidthInput.Text = bitmapImage.WidthInches(requestedDpi.X).ToString("0.##");
+            cutHeightInput.Text = bitmapImage.HeightInches(requestedDpi.Y).ToString("0.##");
             stepHeightInput.Text = string.Empty;
             // resetting sliders
             ResetSliders();
             // setting the cut area
             cutArea.Location = new Point(0, 0);
-            cutArea.Size = new Size(bitmapImage.WidthInches(), bitmapImage.HeightInches());
+            cutArea.Size = new Size(bitmapImage.WidthInches(requestedDpi.X), bitmapImage.HeightInches(requestedDpi.Y));
             // setting the sliders maximum...
             SetSliderMaximums();
             // updating the cut border
@@ -289,11 +425,11 @@ namespace PlotterHelper {
 
         private void SetImageInfo() {
             imageInfo.Text = $"Pixel resolution (width x height)\n" +
-                $" {(int)bitmapImage.PixelWidth} x {(int)bitmapImage.PixelHeight}\n" +
+                $" {bitmapImage.PixelWidth} x {bitmapImage.PixelHeight}\n" +
                 $"Pixel density (horizontal x vertical) [DPI]\n" +
-                $"{bitmapImage.DpiX.ToString("0.##")} x {bitmapImage.DpiY.ToString("0.##")}\n" +
+                $"{requestedDpi.Y:0.##} x {requestedDpi.Y:0.##}\n" +
                 $"Image size (width x height) [inches]\n" +
-                $"{bitmapImage.WidthInches().ToString("0.##")} x {bitmapImage.HeightInches().ToString("0.##")}";
+                $"{bitmapImage.WidthInches(requestedDpi.X):0.##} x {bitmapImage.HeightInches(requestedDpi.Y):0.##}";
         }
 
         /// <summary>
@@ -302,8 +438,8 @@ namespace PlotterHelper {
         /// </summary>
         private void SetSliderMaximums() {
             // setting the sliders maximum...
-            cutSliderX.Maximum = bitmapImage.WidthInches() - cutArea.Width;
-            cutSliderY.Maximum = bitmapImage.HeightInches() - cutArea.Height;
+            cutSliderX.Maximum = bitmapImage.WidthInches(requestedDpi.X) - cutArea.Width;
+            cutSliderY.Maximum = bitmapImage.HeightInches(requestedDpi.Y) - cutArea.Height;
             cutSliderX.UpdateLayout();
             cutSliderY.UpdateLayout();
         }
@@ -329,8 +465,9 @@ namespace PlotterHelper {
             // getting the filename
             string path = dialog.FileName;
             // saving the file
-            IoHandler.SaveToPdf(image, path, bitmapImage.DpiX, bitmapImage.DpiY);
+            IoHandler.SaveToPdf(image, path, requestedDpi.X, requestedDpi.Y);
         }
 
+        #endregion
     }
 }

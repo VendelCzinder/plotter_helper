@@ -41,6 +41,9 @@ namespace PlotterHelper {
             // setting the page size
             page.Width = XUnit.FromInch(bitmap.PixelWidth / dpiX);
             page.Height = XUnit.FromInch(bitmap.PixelHeight / dpiY);
+            // calculating image size
+            double imageWidth = bitmap.PixelWidth / bitmap.DpiX; // [inches]
+            double imageHeight = bitmap.PixelHeight / bitmap.DpiY; // [inches]
             // creating graphics
             XGraphics graphics = XGraphics.FromPdfPage(page);
             // creating image
@@ -48,7 +51,7 @@ namespace PlotterHelper {
             // writing image
             graphics.DrawImage(image, 
                 new XRect(0, 0, page.Width, page.Height),
-                new XRect(0, 0, bitmap.WidthInches(), bitmap.HeightInches()), 
+                new XRect(0, 0, imageWidth, imageHeight),
                 XGraphicsUnit.Inch);
             // saving the file
             pdf.Save(path);
